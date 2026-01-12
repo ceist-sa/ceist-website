@@ -1,0 +1,25 @@
+services:
+  website:
+    container_name: ceist-website
+    image: ghcr.io/ceist-sa/ceist-website:main
+    pull_policy: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - default
+      - listmonk_listmonk
+      - caddy
+    volumes:
+      - ./data:/app/data
+    labels:
+      caddy: ceist.tecnico.ulisboa.pt
+      caddy.reverse_proxy: "{{upstreams 3000}}"
+
+networks:
+  listmonk_listmonk:
+    external: true
+  caddy:
+    external: true
