@@ -9,6 +9,7 @@
     { label: "Concertos", href: "/#news" },
     { label: "Galeria", href: "/galeria" },
     { label: "Músicos", href: "/#members" },
+    { label: "Inscrição", href: "/#join" },
     { label: "Contacto", href: "/#contact" },
   ];
 

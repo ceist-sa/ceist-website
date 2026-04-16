@@ -3,9 +3,10 @@
 
     interface Props {
         sections: Section[];
+        joinFormUrl?: string;
     }
 
-    let { sections }: Props = $props();
+    let { sections, joinFormUrl = "" }: Props = $props();
 </script>
 
 <section id="members" class="py-24 max-md:py-16 bg-ink text-paper">
@@ -14,7 +15,7 @@
             Os Nossos Músicos
         </h2>
         <p class="text-center opacity-80 max-w-[50ch] mx-auto mb-16">
-            Estudantes e alumni do Instituto Superior Técnico unidos pela música
+            Estudantes e alumni unidos pela música
         </p>
 
         <div
@@ -55,5 +56,39 @@
                 </div>
             {/each}
         </div>
+
+        {#if joinFormUrl}
+            <div id="join" class="mt-16 pt-16 border-t border-paper/10 text-center">
+                <h3 class="text-[clamp(1.25rem,3vw,1.75rem)] mb-4">
+                    Junta-te a Nós
+                </h3>
+                <p class="max-w-[50ch] mx-auto opacity-80 mb-8">
+                    Queres vir tocar connosco?<br />Candidata-te para fazeres parte da orquestra.
+                </p>
+                <a
+                    href={joinFormUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-2 px-8 py-4 font-gill text-sm uppercase
+                     border-2 border-paper bg-transparent transition-all duration-300
+                     hover:bg-paper hover:text-ink"
+                >
+                    Inscrição
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                </a>
+            </div>
+        {/if}
     </div>
 </section>

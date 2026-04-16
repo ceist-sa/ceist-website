@@ -25,7 +25,7 @@
                 Próximos Concertos
             </h2>
             <p class="text-center opacity-80 max-w-[50ch] mx-auto mb-16">
-                Descubra os nossos próximos espetáculos
+                Descobre os nossos próximos espetáculos
             </p>
 
             <div

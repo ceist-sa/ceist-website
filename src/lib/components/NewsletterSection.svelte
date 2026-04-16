@@ -53,7 +53,7 @@
     }
 </script>
 
-<section class="py-24 max-md:py-16 bg-ink text-paper relative overflow-hidden">
+<section id="news" class="py-24 max-md:py-16 bg-ink text-paper relative overflow-hidden">
     <div
         class="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-[radial-gradient(circle_at_center,rgba(247,247,245,0.05)_0%,transparent_50%)] pointer-events-none"
     ></div>
@@ -79,10 +79,10 @@
             </svg>
         </div>
         <h2 class="text-[clamp(1.75rem,4vw,2.5rem)] mb-8">
-            Mantenha-se Informado
+            Mantem-te Informado
         </h2>
         <p class="max-w-[50ch] mx-auto opacity-90 mb-8">
-            Subscreva a nossa newsletter e receba em primeira mão informações
+            Subscreve à nossa newsletter e recebe em primeira mão informações
             sobre concertos e novidades da CEIST.
         </p>
         <button
@@ -166,19 +166,19 @@
                 </div>
                 <p class="text-lg">Subscrição efetuada com sucesso!</p>
                 <p class="text-sm opacity-60">
-                    Verifique o seu email para confirmar.
+                    Verifica o teu email para confirmar.
                 </p>
             </div>
         {:else}
             <p class="mb-6 opacity-80">
-                Insira o seu email para receber as nossas atualizações.
+                Insere o teu email para receberes as nossas atualizações.
             </p>
 
             <form onsubmit={handleSubmit} class="flex flex-col gap-4">
                 <input
                     type="email"
                     bind:value={email}
-                    placeholder="o-seu@email.com"
+                    placeholder="o-teu@email.com"
                     required
                     class="w-full px-4 py-3 border-2 border-ink/10 focus:border-ink outline-none transition-colors bg-transparent"
                 />

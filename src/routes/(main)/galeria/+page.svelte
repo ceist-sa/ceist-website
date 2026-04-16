@@ -14,7 +14,7 @@
     <title>Galeria — CEIST</title>
     <meta
         name="description"
-        content="Explore os álbuns de fotos da CEIST - Camerata de Estudantes do Instituto Superior Técnico"
+        content="Explora os álbuns de fotos da CEIST - Camerata de Estudantes do Instituto Superior Técnico"
     />
 </svelte:head>
 
@@ -26,7 +26,7 @@
         <div class="max-w-4xl mx-auto px-8">
             <h1 class="text-[clamp(2rem,5vw,3.5rem)] mb-6">Galeria</h1>
             <p class="text-lg opacity-80 max-w-[55ch] mx-auto">
-                Explore os melhores momentos dos nossos concertos, ensaios e
+                Explora os melhores momentos dos nossos concertos, ensaios e
                 eventos através dos nossos álbuns de fotos.
             </p>
         </div>

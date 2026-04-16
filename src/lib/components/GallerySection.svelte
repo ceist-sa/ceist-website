@@ -205,7 +205,7 @@
             Galeria
         </h2>
         <p class="text-center opacity-80 max-w-[50ch] mx-auto mb-16">
-            Reviva os melhores momentos dos nossos concertos e ensaios
+            Revive os melhores momentos dos nossos concertos e ensaios
         </p>
 
         <div class="grid grid-cols-3 max-[600px]:grid-cols-2 gap-4 mb-16">

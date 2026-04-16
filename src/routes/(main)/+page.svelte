@@ -9,9 +9,19 @@
     let { data } = $props();
 </script>
 
+<svelte:head>
+	<title>CEIST — Camerata de Estudantes do Instituto Superior Técnico</title>
+	<meta
+		name="description"
+		content="Orquestra de câmara formada por estudantes e alumni. Descobre os nossos concertos e eventos."
+	/>
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="icon" type="image/svg+xml" href="/icon.svg" />
+</svelte:head>
+
 <Hero concerts={data.concerts} />
 <NewsSection concerts={data.concerts} />
 <NewsletterSection />
 <GallerySection photos={data.galleryPhotos} />
-<MembersSection sections={data.sections} />
+<MembersSection sections={data.sections} joinFormUrl={data.settings.joinFormUrl} />
 <Footer />

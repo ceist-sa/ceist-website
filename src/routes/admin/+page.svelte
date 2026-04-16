@@ -50,6 +50,9 @@
     let editingAlbum = $state<Album | null>(null);
     let albumForm = $state<Partial<Album>>({});
 
+    // Settings state
+    let joinFormUrl = $state("");
+
     // Loading/saving state
     let loading = $state(true);
     let saveMessage = $state("");
@@ -61,20 +64,34 @@
     async function loadData() {
         loading = true;
         try {
-            const [concertsRes, membersRes, galleryRes, albumsRes] =
+            const [concertsRes, membersRes, galleryRes, albumsRes, settingsRes] =
                 await Promise.all([
                     fetch("/api/concerts"),
                     fetch("/api/members"),
                     fetch("/api/gallery"),
                     fetch("/api/albums"),
+                    fetch("/api/settings"),
                 ]);
             concerts = await concertsRes.json();
             sections = await membersRes.json();
             galleryPhotos = await galleryRes.json();
             albums = await albumsRes.json();
+            const settings = await settingsRes.json();
+            joinFormUrl = settings.joinFormUrl ?? "";
             sortMembers();
         } finally {
             loading = false;
+        }
+    }
+
+    async function saveJoinFormUrl() {
+        const response = await fetch("/api/settings", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ joinFormUrl }),
+        });
+        if (response.ok) {
+            showMessage("Settings saved");
         }
     }
 
@@ -919,6 +936,29 @@
                             </div>
                         </div>
                     {/each}
+                </div>
+
+                <!-- Join Form URL -->
+                <div class="bg-paper/10 rounded-xl p-6 border border-paper/20">
+                    <h3 class="font-gill text-xl mb-4">Application Form</h3>
+                    <p class="text-sm opacity-70 mb-4">
+                        URL of the application form for new members. Leave empty to hide this section.
+                    </p>
+                    <div class="flex gap-3">
+                        <input
+                            id="join-form-url"
+                            type="url"
+                            bind:value={joinFormUrl}
+                            placeholder="https://..."
+                            class="flex-1 px-3 py-2 rounded-lg bg-paper/5 border border-paper/30 focus:border-accent-gold focus:outline-none"
+                        />
+                        <button
+                            onclick={saveJoinFormUrl}
+                            class="px-4 py-2 rounded-lg bg-accent-gold text-ink font-gill hover:bg-accent-gold/90 transition-colors whitespace-nowrap"
+                        >
+                            Save
+                        </button>
+                    </div>
                 </div>
             </div>
         {:else if activeTab === "gallery"}

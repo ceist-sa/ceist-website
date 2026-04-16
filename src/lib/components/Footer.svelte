@@ -12,13 +12,12 @@
                 </p>
                 <p>
                     Desde a sua fundação, a CEIST dedica-se a levar a música a
-                    novos públicos, com concertos em espaços diversos e eventos
-                    no campus do IST.
+                    novos públicos, com concertos em espaços diversos.
                 </p>
             </div>
 
             <div>
-                <h3 class="text-xl mb-8">Contacte-nos</h3>
+                <h3 class="text-xl mb-8">Contacta-nos</h3>
                 <ul class="flex flex-col gap-4 mb-8">
                     <li class="flex items-start gap-4">
                         <svg
