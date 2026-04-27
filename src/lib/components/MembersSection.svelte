@@ -23,7 +23,7 @@
         >
             {#each sections as section}
                 <div
-                    class="p-8 bg-paper/5 border border-paper/10 rounded-lg transition-all duration-300 hover:bg-paper/10 hover:border-paper/20 max-h-[600px] overflow-hidden break-inside-avoid mb-8 inline-block w-full"
+                    class="p-8 bg-paper/5 border border-paper/10 rounded-lg transition-all duration-300 hover:bg-paper/10 hover:border-paper/20 overflow-hidden break-inside-avoid mb-8 inline-block w-full"
                 >
                     <h4
                         class="font-gill uppercase text-sm mb-4 pb-2 border-b border-paper/20"
