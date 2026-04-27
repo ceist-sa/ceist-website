@@ -79,7 +79,7 @@
             </svg>
         </div>
         <h2 class="text-[clamp(1.75rem,4vw,2.5rem)] mb-8">
-            Mantem-te Informado
+            Mantém-te Informado
         </h2>
         <p class="max-w-[50ch] mx-auto opacity-90 mb-8">
             Subscreve à nossa newsletter e recebe em primeira mão informações
