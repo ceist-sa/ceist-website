@@ -5,16 +5,14 @@
         Pencil,
         Trash2,
         UserPlus,
-        Image,
+        ExternalLink,
     } from "@lucide/svelte";
+    import { concertUrl, isUpcoming } from "$lib/concerts";
     import type { NewsItem } from "$lib/data/news";
     import type { Section, Member } from "$lib/data/members";
     import type { GalleryPhoto } from "$lib/data/gallery";
-    import type { Album } from "$lib/data/albums";
 
-    let activeTab = $state<"concerts" | "members" | "gallery" | "albums">(
-        "concerts",
-    );
+    let activeTab = $state<"concerts" | "members" | "gallery">("concerts");
 
     // Concerts state
     let concerts = $state<NewsItem[]>([]);
@@ -40,18 +38,12 @@
     let dragOverSectionIndex = $state<number | null>(null);
 
     // Gallery state
-    let galleryPhotos = $state<GalleryPhoto[]>([]);
-    let newPhotoUrl = $state("");
-    let isAddingPhoto = $state(false);
-
-    // Albums state
-    let albums = $state<Album[]>([]);
-    let isAddingAlbum = $state(false);
-    let editingAlbum = $state<Album | null>(null);
-    let albumForm = $state<Partial<Album>>({});
+    let galleryPreview = $state<GalleryPhoto[]>([]);
+    let galleryPreviewLoading = $state(false);
 
     // Settings state
     let joinFormUrl = $state("");
+    let galleryAlbumUrl = $state("");
 
     // Loading/saving state
     let loading = $state(true);
@@ -64,21 +56,18 @@
     async function loadData() {
         loading = true;
         try {
-            const [concertsRes, membersRes, galleryRes, albumsRes, settingsRes] =
-                await Promise.all([
-                    fetch("/api/concerts"),
-                    fetch("/api/members"),
-                    fetch("/api/gallery"),
-                    fetch("/api/albums"),
-                    fetch("/api/settings"),
-                ]);
+            const [concertsRes, membersRes, settingsRes] = await Promise.all([
+                fetch("/api/concerts"),
+                fetch("/api/members"),
+                fetch("/api/settings"),
+            ]);
             concerts = await concertsRes.json();
             sections = await membersRes.json();
-            galleryPhotos = await galleryRes.json();
-            albums = await albumsRes.json();
             const settings = await settingsRes.json();
             joinFormUrl = settings.joinFormUrl ?? "";
+            galleryAlbumUrl = settings.galleryAlbumUrl ?? "";
             sortMembers();
+            loadGalleryPreview();
         } finally {
             loading = false;
         }
@@ -92,6 +81,28 @@
         });
         if (response.ok) {
             showMessage("Settings saved");
+        }
+    }
+
+    async function saveGalleryAlbumUrl() {
+        const response = await fetch("/api/settings", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ galleryAlbumUrl: galleryAlbumUrl.trim() }),
+        });
+        if (response.ok) {
+            showMessage("Settings saved");
+            loadGalleryPreview();
+        }
+    }
+
+    async function loadGalleryPreview() {
+        galleryPreviewLoading = true;
+        try {
+            const response = await fetch("/api/gallery");
+            galleryPreview = response.ok ? await response.json() : [];
+        } finally {
+            galleryPreviewLoading = false;
         }
     }
 
@@ -335,123 +346,6 @@
         draggedSectionIndex = null;
         dragOverSectionIndex = null;
     }
-
-    // Gallery CRUD
-    function startAddPhoto() {
-        isAddingPhoto = true;
-        newPhotoUrl = "";
-    }
-
-    function cancelAddPhoto() {
-        isAddingPhoto = false;
-        newPhotoUrl = "";
-    }
-
-    async function addPhoto() {
-        if (!newPhotoUrl.trim()) return;
-
-        const response = await fetch("/api/gallery", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url: newPhotoUrl.trim() }),
-        });
-
-        if (response.ok) {
-            const newPhoto = await response.json();
-            galleryPhotos = [...galleryPhotos, newPhoto];
-            showMessage("Photo added");
-        }
-
-        cancelAddPhoto();
-    }
-
-    async function deletePhoto(id: string) {
-        if (!confirm("Are you sure you want to remove this photo?")) return;
-
-        const response = await fetch("/api/gallery", {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id }),
-        });
-
-        if (response.ok) {
-            galleryPhotos = galleryPhotos.filter((p) => p.id !== id);
-            showMessage("Photo removed");
-        }
-    }
-
-    // Albums CRUD
-    function startAddAlbum() {
-        isAddingAlbum = true;
-        editingAlbum = null;
-        albumForm = {
-            title: "",
-            date: "",
-            location: "",
-            coverUrl: "",
-            albumUrl: "",
-        };
-    }
-
-    function startEditAlbum(album: Album) {
-        editingAlbum = album;
-        isAddingAlbum = false;
-        albumForm = { ...album };
-    }
-
-    function cancelAlbumEdit() {
-        isAddingAlbum = false;
-        editingAlbum = null;
-        albumForm = {};
-    }
-
-    async function saveAlbum() {
-        if (!albumForm.title || !albumForm.coverUrl || !albumForm.albumUrl)
-            return;
-
-        if (isAddingAlbum) {
-            const response = await fetch("/api/albums", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(albumForm),
-            });
-
-            if (response.ok) {
-                const newAlbum = await response.json();
-                albums = [...albums, newAlbum];
-                showMessage("Album added");
-            }
-        } else if (editingAlbum) {
-            const response = await fetch("/api/albums", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...editingAlbum, ...albumForm }),
-            });
-
-            if (response.ok) {
-                const updated = await response.json();
-                albums = albums.map((a) => (a.id === updated.id ? updated : a));
-                showMessage("Album updated");
-            }
-        }
-
-        cancelAlbumEdit();
-    }
-
-    async function deleteAlbum(id: string) {
-        if (!confirm("Are you sure you want to delete this album?")) return;
-
-        const response = await fetch("/api/albums", {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id }),
-        });
-
-        if (response.ok) {
-            albums = albums.filter((a) => a.id !== id);
-            showMessage("Album deleted");
-        }
-    }
 </script>
 
 <svelte:head>
@@ -509,15 +403,6 @@
                     : 'opacity-60 hover:opacity-100'}"
             >
                 Gallery
-            </button>
-            <button
-                onclick={() => (activeTab = "albums")}
-                class="pb-3 px-2 font-gill transition-all {activeTab ===
-                'albums'
-                    ? 'border-b-2 border-accent-gold text-accent-gold'
-                    : 'opacity-60 hover:opacity-100'}"
-            >
-                Albums
             </button>
         </div>
 
@@ -599,7 +484,7 @@
                                 <label
                                     for="concert-description"
                                     class="block text-sm mb-1 opacity-80"
-                                    >Description</label
+                                    >Description <span class="opacity-60">(short, shown on the card)</span></label
                                 >
                                 <textarea
                                     id="concert-description"
@@ -607,6 +492,76 @@
                                     rows="3"
                                     class="w-full px-3 py-2 rounded-lg bg-paper/5 border border-paper/30 focus:border-accent-gold focus:outline-none resize-none"
                                 ></textarea>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label
+                                    for="concert-details"
+                                    class="block text-sm mb-1 opacity-80"
+                                    >Details <span class="opacity-60">(optional, shown on the concert page; separate paragraphs with a blank line)</span></label
+                                >
+                                <textarea
+                                    id="concert-details"
+                                    bind:value={concertForm.details}
+                                    rows="6"
+                                    placeholder=""
+                                    class="w-full px-3 py-2 rounded-lg bg-paper/5 border border-paper/30 focus:border-accent-gold focus:outline-none resize-y"
+                                ></textarea>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label
+                                    for="concert-program"
+                                    class="block text-sm mb-1 opacity-80"
+                                    >Programme <span class="opacity-60">(optional, one piece per line, e.g. “Vivaldi — As Quatro Estações”)</span></label
+                                >
+                                <textarea
+                                    id="concert-program"
+                                    bind:value={concertForm.program}
+                                    rows="5"
+                                    placeholder="Vivaldi — As Quatro Estações"
+                                    class="w-full px-3 py-2 rounded-lg bg-paper/5 border border-paper/30 focus:border-accent-gold focus:outline-none resize-y"
+                                ></textarea>
+                            </div>
+                            <div>
+                                <label
+                                    for="concert-price"
+                                    class="block text-sm mb-1 opacity-80"
+                                    >Price <span class="opacity-60">(optional)</span></label
+                                >
+                                <input
+                                    id="concert-price"
+                                    type="text"
+                                    bind:value={concertForm.price}
+                                    placeholder="e.g. Entrada livre"
+                                    class="w-full px-3 py-2 rounded-lg bg-paper/5 border border-paper/30 focus:border-accent-gold focus:outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label
+                                    for="concert-ticket-url"
+                                    class="block text-sm mb-1 opacity-80"
+                                    >Ticket URL <span class="opacity-60">(optional)</span></label
+                                >
+                                <input
+                                    id="concert-ticket-url"
+                                    type="url"
+                                    bind:value={concertForm.ticketUrl}
+                                    placeholder="https://…"
+                                    class="w-full px-3 py-2 rounded-lg bg-paper/5 border border-paper/30 focus:border-accent-gold focus:outline-none"
+                                />
+                            </div>
+                            <div class="md:col-span-2">
+                                <label
+                                    for="concert-image-url"
+                                    class="block text-sm mb-1 opacity-80"
+                                    >Poster image URL <span class="opacity-60">(optional)</span></label
+                                >
+                                <input
+                                    id="concert-image-url"
+                                    type="url"
+                                    bind:value={concertForm.imageUrl}
+                                    placeholder="https://…"
+                                    class="w-full px-3 py-2 rounded-lg bg-paper/5 border border-paper/30 focus:border-accent-gold focus:outline-none"
+                                />
                             </div>
                         </div>
                         <div class="flex gap-3 mt-4">
@@ -635,12 +590,28 @@
                             <div class="flex-1 min-w-0">
                                 <h4 class="font-gill text-lg truncate">
                                     {concert.title}
+                                    {#if !isUpcoming(concert)}
+                                        <span
+                                            class="ml-2 px-2 py-0.5 rounded text-xs align-middle bg-paper/10 opacity-70"
+                                            title="Past concerts are hidden from the website"
+                                            >Past</span
+                                        >
+                                    {/if}
                                 </h4>
                                 <p class="text-sm opacity-70">
                                     {concert.date} · {concert.time} · {concert.location}
                                 </p>
                             </div>
                             <div class="flex gap-2 shrink-0">
+                                <a
+                                    href={concertUrl(concert)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="p-2 rounded-lg border border-paper/30 text-sm hover:bg-paper/10 transition-colors"
+                                    aria-label="View page"
+                                >
+                                    <ExternalLink size={16} />
+                                </a>
                                 <button
                                     onclick={() => startEditConcert(concert)}
                                     class="p-2 rounded-lg border border-paper/30 text-sm hover:bg-paper/10 transition-colors"
@@ -964,264 +935,62 @@
         {:else if activeTab === "gallery"}
             <!-- Gallery Tab -->
             <div class="space-y-6">
-                <div class="flex justify-end">
-                    <button
-                        onclick={startAddPhoto}
-                        class="px-4 py-2 rounded-lg bg-accent-sage text-ink font-gill hover:bg-accent-sage/90 transition-colors"
-                    >
-                        + Add Photo
-                    </button>
+                <div class="bg-paper/10 rounded-xl p-6 border border-paper/20">
+                    <h3 class="font-gill text-xl mb-4">Immich Album</h3>
+                    <p class="text-sm opacity-70 mb-4">
+                        Share link of the Immich album shown in the website's
+                        gallery (e.g. https://photos.ceist.pt/share/…). The
+                        website shows a random selection of its photos. Changes
+                        in Immich can take up to 10 minutes to appear.
+                    </p>
+                    <div class="flex gap-3">
+                        <input
+                            id="gallery-album-url"
+                            type="url"
+                            bind:value={galleryAlbumUrl}
+                            placeholder="https://photos.ceist.pt/share/..."
+                            class="flex-1 px-3 py-2 rounded-lg bg-paper/5 border border-paper/30 focus:border-accent-gold focus:outline-none"
+                        />
+                        <button
+                            onclick={saveGalleryAlbumUrl}
+                            class="px-4 py-2 rounded-lg bg-accent-gold text-ink font-gill hover:bg-accent-gold/90 transition-colors whitespace-nowrap"
+                        >
+                            Save
+                        </button>
+                    </div>
                 </div>
 
-                {#if isAddingPhoto}
+                <div>
+                    <p class="text-sm opacity-70 mb-3">
+                        {#if galleryPreviewLoading}
+                            Loading photos...
+                        {:else if galleryPreview.length === 0}
+                            No photos found. Check that the share link is
+                            correct and that the album isn't empty.
+                        {:else}
+                            {galleryPreview.length} photos available
+                        {/if}
+                    </p>
                     <div
-                        class="bg-paper/10 rounded-xl p-4 border border-paper/20"
+                        class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2"
                     >
-                        <div class="flex gap-3 items-end">
-                            <div class="flex-1">
-                                <label
-                                    for="photo-url"
-                                    class="block text-sm mb-1 opacity-80"
-                                    >Photo URL</label
-                                >
-                                <input
-                                    id="photo-url"
-                                    type="url"
-                                    bind:value={newPhotoUrl}
-                                    placeholder="https://example.com/photo.jpg"
-                                    class="w-full px-3 py-2 rounded-lg bg-paper/5 border border-paper/30 focus:border-accent-gold focus:outline-none"
-                                />
-                            </div>
-                            <button
-                                onclick={addPhoto}
-                                class="px-4 py-2 rounded-lg bg-accent-gold text-ink font-gill hover:bg-accent-gold/90 transition-colors"
-                            >
-                                Add
-                            </button>
-                            <button
-                                onclick={cancelAddPhoto}
-                                class="px-4 py-2 rounded-lg border border-paper/30 font-gill hover:bg-paper/10 transition-colors"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                {/if}
-
-                {#if galleryPhotos.length === 0}
-                    <div
-                        class="text-center py-12 opacity-60 bg-paper/5 rounded-xl border border-paper/10"
-                    >
-                        <Image class="mx-auto mb-4 opacity-40" size={48} />
-                        <p>No gallery photos yet</p>
-                        <p class="text-sm mt-1">
-                            Add photo URLs to display in the gallery section
-                        </p>
-                    </div>
-                {:else}
-                    <div
-                        class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
-                    >
-                        {#each galleryPhotos as photo (photo.id)}
-                            <div
-                                class="aspect-square rounded-lg relative overflow-hidden group border border-paper/10"
+                        {#each galleryPreview.slice(0, 24) as photo (photo.id)}
+                            <a
+                                href={photo.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="aspect-square rounded-lg overflow-hidden bg-paper/5"
                             >
                                 <img
                                     src={photo.url}
                                     alt=""
+                                    loading="lazy"
                                     class="w-full h-full object-cover"
                                 />
-                                <div
-                                    class="absolute inset-0 bg-ink/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                                >
-                                    <button
-                                        onclick={() => deletePhoto(photo.id)}
-                                        class="p-3 rounded-full bg-accent-rose text-paper hover:bg-accent-rose/80 transition-colors"
-                                        aria-label="Delete photo"
-                                    >
-                                        <Trash2 size={20} />
-                                    </button>
-                                </div>
-                            </div>
+                            </a>
                         {/each}
                     </div>
-                {/if}
-            </div>
-        {:else}
-            <!-- Albums Tab -->
-            <div class="space-y-6">
-                <div class="flex justify-end">
-                    <button
-                        onclick={startAddAlbum}
-                        class="px-4 py-2 rounded-lg bg-accent-sage text-ink font-gill hover:bg-accent-sage/90 transition-colors"
-                    >
-                        + Add Album
-                    </button>
                 </div>
-
-                {#if isAddingAlbum || editingAlbum}
-                    <div
-                        class="bg-paper/10 rounded-xl p-6 border border-paper/20"
-                    >
-                        <h3 class="font-gill text-xl mb-4">
-                            {isAddingAlbum ? "New Album" : "Edit Album"}
-                        </h3>
-                        <div class="space-y-4">
-                            <div>
-                                <label
-                                    for="album-title"
-                                    class="block text-sm mb-1 opacity-80"
-                                    >Album Title</label
-                                >
-                                <input
-                                    id="album-title"
-                                    type="text"
-                                    bind:value={albumForm.title}
-                                    placeholder="e.g., Concerto de Natal 2025"
-                                    class="w-full px-3 py-2 rounded-lg bg-paper/5 border border-paper/30 focus:border-accent-gold focus:outline-none"
-                                />
-                            </div>
-                            <div class="grid md:grid-cols-2 gap-4">
-                                <div>
-                                    <label
-                                        for="album-date"
-                                        class="block text-sm mb-1 opacity-80"
-                                        >Date</label
-                                    >
-                                    <input
-                                        id="album-date"
-                                        type="date"
-                                        bind:value={albumForm.date}
-                                        class="w-full px-3 py-2 rounded-lg bg-paper/5 border border-paper/30 focus:border-accent-gold focus:outline-none"
-                                    />
-                                </div>
-                                <div>
-                                    <label
-                                        for="album-location"
-                                        class="block text-sm mb-1 opacity-80"
-                                        >Location</label
-                                    >
-                                    <input
-                                        id="album-location"
-                                        type="text"
-                                        bind:value={albumForm.location}
-                                        placeholder="e.g., Aula Magna, IST"
-                                        class="w-full px-3 py-2 rounded-lg bg-paper/5 border border-paper/30 focus:border-accent-gold focus:outline-none"
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label
-                                    for="album-cover"
-                                    class="block text-sm mb-1 opacity-80"
-                                    >Cover Photo URL</label
-                                >
-                                <input
-                                    id="album-cover"
-                                    type="url"
-                                    bind:value={albumForm.coverUrl}
-                                    placeholder="https://example.com/cover.jpg"
-                                    class="w-full px-3 py-2 rounded-lg bg-paper/5 border border-paper/30 focus:border-accent-gold focus:outline-none"
-                                />
-                            </div>
-                            <div>
-                                <label
-                                    for="album-url"
-                                    class="block text-sm mb-1 opacity-80"
-                                    >Immich Album URL</label
-                                >
-                                <input
-                                    id="album-url"
-                                    type="url"
-                                    bind:value={albumForm.albumUrl}
-                                    placeholder="https://photos.example.com/album/..."
-                                    class="w-full px-3 py-2 rounded-lg bg-paper/5 border border-paper/30 focus:border-accent-gold focus:outline-none"
-                                />
-                            </div>
-                        </div>
-                        <div class="flex gap-3 mt-4">
-                            <button
-                                onclick={saveAlbum}
-                                class="px-4 py-2 rounded-lg bg-accent-gold text-ink font-gill hover:bg-accent-gold/90 transition-colors"
-                            >
-                                Save
-                            </button>
-                            <button
-                                onclick={cancelAlbumEdit}
-                                class="px-4 py-2 rounded-lg border border-paper/30 font-gill hover:bg-paper/10 transition-colors"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                {/if}
-
-                {#if albums.length === 0}
-                    <div
-                        class="text-center py-12 opacity-60 bg-paper/5 rounded-xl border border-paper/10"
-                    >
-                        <Image class="mx-auto mb-4 opacity-40" size={48} />
-                        <p>No albums yet</p>
-                        <p class="text-sm mt-1">
-                            Add albums to display on the gallery page
-                        </p>
-                    </div>
-                {:else}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {#each albums as album (album.id)}
-                            <div
-                                class="bg-paper/5 rounded-xl border border-paper/10 overflow-hidden flex"
-                            >
-                                <div class="w-32 h-24 shrink-0">
-                                    <img
-                                        src={album.coverUrl}
-                                        alt=""
-                                        class="w-full h-full object-cover"
-                                    />
-                                </div>
-                                <div
-                                    class="flex-1 p-4 flex items-center justify-between gap-4 overflow-hidden"
-                                >
-                                    <div class="min-w-0 flex-1">
-                                        <h4 class="font-gill text-lg truncate">
-                                            {album.title}
-                                        </h4>
-                                        {#if album.date || album.location}
-                                            <p
-                                                class="text-sm opacity-60 truncate"
-                                            >
-                                                {#if album.date && album.location}
-                                                    {album.date} · {album.location}
-                                                {:else}
-                                                    {album.date ||
-                                                        album.location}
-                                                {/if}
-                                            </p>
-                                        {/if}
-                                    </div>
-                                    <div class="flex gap-2 shrink-0">
-                                        <button
-                                            onclick={() =>
-                                                startEditAlbum(album)}
-                                            class="p-2 rounded-lg border border-paper/30 text-sm hover:bg-paper/10 transition-colors"
-                                            aria-label="Edit"
-                                        >
-                                            <Pencil size={16} />
-                                        </button>
-                                        <button
-                                            onclick={() =>
-                                                deleteAlbum(album.id)}
-                                            class="p-2 rounded-lg border border-accent-rose/50 text-accent-rose text-sm hover:bg-accent-rose/10 transition-colors"
-                                            aria-label="Delete"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        {/each}
-                    </div>
-                {/if}
             </div>
         {/if}
     </div>

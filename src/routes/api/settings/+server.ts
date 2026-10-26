@@ -7,7 +7,8 @@ export const GET: RequestHandler = () => {
 };
 
 export const PUT: RequestHandler = async ({ request }) => {
-    const settings = await request.json();
+    // Merge so that saving one setting doesn't wipe the others
+    const settings = { ...getSettings(), ...(await request.json()) };
     saveSettings(settings);
     return json(settings);
 };

@@ -2,18 +2,12 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import type { NewsItem } from '$lib/data/news';
 import type { Section } from '$lib/data/members';
-import type { GalleryPhoto } from '$lib/data/gallery';
-import type { Album } from '$lib/data/albums';
 import type { Settings } from '$lib/data/settings';
-
-export type { GalleryPhoto, Album };
-
+import { isUpcoming } from '$lib/concerts';
 
 const DATA_DIR = join(process.cwd(), 'data');
 const CONCERTS_FILE = join(DATA_DIR, 'concerts.json');
 const MEMBERS_FILE = join(DATA_DIR, 'members.json');
-const GALLERY_FILE = join(DATA_DIR, 'gallery.json');
-const ALBUMS_FILE = join(DATA_DIR, 'albums.json');
 const SETTINGS_FILE = join(DATA_DIR, 'settings.json');
 
 export function getConcerts(): NewsItem[] {
@@ -22,6 +16,17 @@ export function getConcerts(): NewsItem[] {
     }
     const data = readFileSync(CONCERTS_FILE, 'utf-8');
     return JSON.parse(data);
+}
+
+/** Concerts happening today or later (Lisbon time), soonest first. */
+export function getUpcomingConcerts(): NewsItem[] {
+    return getConcerts()
+        .filter(isUpcoming)
+        .toSorted((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
+}
+
+export function getConcert(id: string): NewsItem | undefined {
+    return getConcerts().find(c => c.id === id);
 }
 
 export function saveConcerts(concerts: NewsItem[]): void {
@@ -40,43 +45,13 @@ export function saveSections(sections: Section[]): void {
     writeFileSync(MEMBERS_FILE, JSON.stringify(sections, null, 4), 'utf-8');
 }
 
-export function getGalleryPhotos(): GalleryPhoto[] {
-    if (!existsSync(GALLERY_FILE)) {
-        return [];
-    }
-    const data = readFileSync(GALLERY_FILE, 'utf-8');
-    return JSON.parse(data);
-}
-
-export function saveGalleryPhotos(photos: GalleryPhoto[]): void {
-    writeFileSync(GALLERY_FILE, JSON.stringify(photos, null, 4), 'utf-8');
-}
-
-export function getAlbums(): Album[] {
-    if (!existsSync(ALBUMS_FILE)) {
-        return [];
-    }
-    const data = readFileSync(ALBUMS_FILE, 'utf-8');
-    return JSON.parse(data);
-}
-
-export function saveAlbums(albums: Album[]): void {
-    // Sort by date descending (newest first)
-    const sorted = albums.toSorted((a, b) => {
-        if (!a.date && !b.date) return 0;
-        if (!a.date) return 1;
-        if (!b.date) return -1;
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
-    });
-    writeFileSync(ALBUMS_FILE, JSON.stringify(sorted, null, 4), 'utf-8');
-}
-
 export function getSettings(): Settings {
+    const defaults: Settings = { joinFormUrl: '', galleryAlbumUrl: '' };
     if (!existsSync(SETTINGS_FILE)) {
-        return { joinFormUrl: '' };
+        return defaults;
     }
     const data = readFileSync(SETTINGS_FILE, 'utf-8');
-    return JSON.parse(data);
+    return { ...defaults, ...JSON.parse(data) };
 }
 
 export function saveSettings(settings: Settings): void {

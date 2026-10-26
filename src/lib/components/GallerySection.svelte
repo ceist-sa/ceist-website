@@ -5,9 +5,11 @@
 
     interface Props {
         photos?: GalleryPhoto[];
+        /** Immich share link of the full album */
+        albumUrl?: string;
     }
 
-    let { photos = [] }: Props = $props();
+    let { photos = [], albumUrl = "" }: Props = $props();
 
     // Number of slots to display
     const SLOT_COUNT = 6;
@@ -212,9 +214,10 @@
             {#each Array(SLOT_COUNT) as _, i}
                 {#if photos.length > 0 && slotPhotoIndices[i] !== undefined}
                     <a
-                        href={photos[slotPhotoIndices[i]]?.url}
+                        href={photos[slotPhotoIndices[i]]?.link}
                         target="_blank"
                         rel="noopener noreferrer"
+                        aria-label="Abrir fotografia"
                         class="aspect-square rounded-lg relative overflow-hidden cursor-pointer group
                         {i >= 4 ? 'max-[600px]:hidden' : ''}"
                     >
@@ -222,6 +225,8 @@
                             <img
                                 src={photos[slotPhotoIndices[i]]?.url}
                                 alt=""
+                                loading="lazy"
+                                decoding="async"
                                 class="absolute inset-0 w-full h-full object-cover"
                                 in:fade={{ duration: 700 }}
                                 out:fade={{ duration: 700 }}
@@ -259,75 +264,52 @@
                         class="aspect-square rounded-lg relative overflow-hidden
                         {i >= 4 ? 'max-[600px]:hidden' : ''}
                         {fallbackColors[i]}"
-                    >
-                        <div
-                            class="absolute inset-0 flex items-center justify-center bg-ink/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100 text-paper"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="32"
-                                height="32"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.5"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            >
-                                <rect
-                                    x="3"
-                                    y="3"
-                                    width="18"
-                                    height="18"
-                                    rx="2"
-                                    ry="2"
-                                />
-                                <circle cx="8.5" cy="8.5" r="1.5" />
-                                <polyline points="21 15 16 10 5 21" />
-                            </svg>
-                        </div>
-                    </div>
+                    ></div>
                 {/if}
             {/each}
         </div>
 
-        <div class="text-center">
-            <a
-                href="/galeria"
-                class="inline-flex items-center gap-2 px-8 py-4 font-gill text-sm uppercase
-               border-2 border-current bg-transparent cursor-pointer transition-all duration-300
-               hover:bg-ink hover:text-paper"
-            >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+        {#if albumUrl}
+            <div class="text-center">
+                <a
+                    href={albumUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-2 px-8 py-4 font-gill text-sm uppercase
+                   border-2 border-current bg-transparent cursor-pointer transition-all duration-300
+                   hover:bg-ink hover:text-paper"
                 >
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <polyline points="21 15 16 10 5 21" />
-                </svg>
-                Ver Galeria Completa
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <polyline points="9 18 15 12 9 6" />
-                </svg>
-            </a>
-        </div>
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                    Ver Galeria Completa
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                </a>
+            </div>
+        {/if}
     </div>
 </section>

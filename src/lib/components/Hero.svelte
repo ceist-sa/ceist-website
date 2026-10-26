@@ -6,17 +6,51 @@
         concerts?: NewsItem[];
     }
 
+    interface MusicSymbol {
+        glyph: string;
+        /** Position inside the hero, as CSS lengths */
+        top: string;
+        left: string;
+        /** Font size, as a CSS length */
+        size: string;
+        color: string;
+        /** How strongly the symbol reacts to the mouse (parallax depth) */
+        depth: number;
+        /** Float animation duration and offset, in seconds */
+        duration: number;
+        delay: number;
+        /** Hide on small screens, where it would overlap the logo */
+        desktopOnly?: boolean;
+    }
+
+    const symbols: MusicSymbol[] = [
+        { glyph: "𝄞", top: "20%", left: "8%", size: "clamp(2.75rem, 4.5vw, 4.25rem)", color: "text-accent-sky", depth: 1.6, duration: 9, delay: 0 },
+        { glyph: "♪", top: "14%", left: "25%", size: "3rem", color: "text-accent-sage", depth: 0.8, duration: 7, delay: -2, desktopOnly: true },
+        { glyph: "♫", top: "58%", left: "6%", size: "clamp(2.5rem, 5vw, 3.75rem)", color: "text-accent-rose", depth: 1.2, duration: 8, delay: -4 },
+        { glyph: "♩", top: "44%", left: "22%", size: "3.25rem", color: "text-accent-gold", depth: 0.5, duration: 6, delay: -1, desktopOnly: true },
+        { glyph: "♭", top: "82%", left: "16%", size: "3.5rem", color: "text-accent-gold", depth: 0.9, duration: 7.5, delay: -3, desktopOnly: true },
+        { glyph: "𝄢", top: "28%", left: "86%", size: "clamp(2.75rem, 5.5vw, 4.5rem)", color: "text-accent-rose", depth: 1.4, duration: 10, delay: -5 },
+        { glyph: "♬", top: "14%", left: "73%", size: "3.25rem", color: "text-accent-sky", depth: 0.7, duration: 8.5, delay: -6, desktopOnly: true },
+        { glyph: "♯", top: "74%", left: "91%", size: "clamp(3rem, 5vw, 4rem)", color: "text-accent-sage", depth: 1.1, duration: 6.5, delay: -2.5 },
+        { glyph: "♮", top: "82%", left: "78%", size: "3.25rem", color: "text-accent-rose", depth: 0.6, duration: 7, delay: -1.5, desktopOnly: true },
+    ];
+
     let { concerts = [] }: Props = $props();
     let visible = $state(false);
     let mouseX = $state(0);
     let mouseY = $state(0);
+    let reduceMotion = false;
 
     function handleMouseMove(event: MouseEvent) {
+        if (reduceMotion) return;
         mouseX = event.clientX / window.innerWidth - 0.5;
         mouseY = event.clientY / window.innerHeight - 0.5;
     }
 
     onMount(() => {
+        reduceMotion = window.matchMedia(
+            "(prefers-reduced-motion: reduce)",
+        ).matches;
         visible = true;
     });
 </script>
@@ -29,7 +63,7 @@
 >
     <!-- Background Decorations -->
     <div
-        role="presentation"
+        aria-hidden="true"
         class="absolute inset-0 z-0 pointer-events-none select-none"
         style="mask-image: linear-gradient(to bottom, black 80%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);"
     >
@@ -44,19 +78,26 @@
             class="absolute bottom-12 left-1/4 w-[400px] h-[400px] bg-accent-gold/20 rounded-full blur-[100px] animate-pulse-slow"
         ></div>
 
-        <!-- Floating Decorative Elements (Small Dots/Notes style) -->
-        <div
-            class="absolute top-[20%] left-[20%] w-2 h-2 rounded-full bg-accent-sage animate-float"
-        ></div>
-        <div
-            class="absolute top-[60%] left-[10%] w-3 h-3 rounded-full bg-accent-sky animate-float-delayed"
-        ></div>
-        <div
-            class="absolute bottom-[20%] right-[25%] w-2 h-2 rounded-full bg-accent-gold animate-float"
-        ></div>
-        <div
-            class="absolute top-[30%] right-[15%] w-4 h-4 rounded-full bg-accent-rose animate-float-delayed"
-        ></div>
+        <!-- Floating Musical Symbols -->
+        {#each symbols as symbol, i}
+            <div
+                class="absolute -translate-x-1/2 -translate-y-1/2 transition-[opacity,transform] ease-out
+                    {symbol.desktopOnly ? 'max-md:hidden' : ''}
+                    {visible ? 'opacity-100' : 'opacity-0'}"
+                style="top: {symbol.top}; left: {symbol.left}; transform: translate({mouseX *
+                    symbol.depth *
+                    -40}px, {mouseY * symbol.depth * -40}px);
+                    transition-duration: 1200ms, 600ms; transition-delay: {300 +
+                    i * 120}ms, 0ms;"
+            >
+                <span
+                    class="block font-music leading-none animate-sway {symbol.color}"
+                    style="font-size: {symbol.size}; animation-duration: {symbol.duration}s; animation-delay: {symbol.delay}s;"
+                >
+                    {symbol.glyph}
+                </span>
+            </div>
+        {/each}
     </div>
 
     <div
@@ -139,21 +180,17 @@
         animation: pulse-slower 20s ease-in-out infinite;
     }
 
-    .animate-float {
-        animation: float 6s ease-in-out infinite;
+    .animate-sway {
+        animation: sway 8s ease-in-out infinite;
     }
 
-    .animate-float-delayed {
-        animation: float 8s ease-in-out infinite 2s;
-    }
-
-    @keyframes float {
+    @keyframes sway {
         0%,
         100% {
-            transform: translateY(0) translateX(0);
+            transform: translateY(0) rotate(-6deg);
         }
         50% {
-            transform: translateY(-20px) translateX(10px);
+            transform: translateY(-18px) rotate(6deg);
         }
     }
 </style>

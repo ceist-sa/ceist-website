@@ -4,10 +4,20 @@ import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request }) => {
     try {
-        const { email } = await request.json();
+        const body = await request.json();
+        const email = typeof body?.email === 'string' ? body.email.trim() : '';
 
         if (!email) {
             return json({ error: 'Email é obrigatório' }, { status: 400 });
+        }
+
+        if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return json({ error: 'Email inválido' }, { status: 400 });
+        }
+
+        if (!env.LISTMONK_URL) {
+            console.error('LISTMONK_URL is not configured');
+            return json({ error: 'A newsletter está temporariamente indisponível.' }, { status: 503 });
         }
 
         const auth = Buffer.from(`${env.LISTMONK_USERNAME}:${env.LISTMONK_PASSWORD}`).toString('base64');

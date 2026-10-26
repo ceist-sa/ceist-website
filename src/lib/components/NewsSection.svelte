@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { NewsItem } from "$lib/data/news";
+    import { concertUrl, parseConcertDate } from "$lib/concerts";
 
     interface Props {
         concerts: NewsItem[];
@@ -8,7 +9,7 @@
     let { concerts }: Props = $props();
 
     function getMonthDay(dateStr: string): { month: string; day: string } {
-        const date = new Date(dateStr);
+        const date = parseConcertDate(dateStr);
         return {
             month: date
                 .toLocaleDateString("pt-PT", { month: "short" })
@@ -18,12 +19,17 @@
     }
 </script>
 
-{#if concerts.length > 0}
-    <section id="news" class="py-24 max-md:py-16">
-        <div class="max-w-5xl mx-auto px-8">
-            <h2 class="text-[clamp(1.75rem,4vw,2.5rem)] text-center mb-8">
-                Próximos Concertos
-            </h2>
+<section id="news" class="py-24 max-md:py-16">
+    <div class="max-w-5xl mx-auto px-8">
+        <h2 class="text-[clamp(1.75rem,4vw,2.5rem)] text-center mb-8">
+            Próximos Concertos
+        </h2>
+        {#if concerts.length === 0}
+            <p class="text-center opacity-80 max-w-[50ch] mx-auto">
+                De momento não temos concertos agendados.<br />Subscreve a
+                newsletter para saberes em primeira mão quando houver novidades.
+            </p>
+        {:else}
             <p class="text-center opacity-80 max-w-[50ch] mx-auto mb-16">
                 Descobre os nossos próximos espetáculos
             </p>
@@ -33,8 +39,9 @@
             >
                 {#each concerts as item (item.id)}
                     {@const dateInfo = getMonthDay(item.date)}
-                    <article
-                        class="flex gap-8 p-8 bg-paper border border-ink/10 rounded-lg transition-all duration-300
+                    <a
+                        href={concertUrl(item)}
+                        class="group flex gap-8 p-8 bg-paper border border-ink/10 rounded-lg transition-all duration-300
                             hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(40,40,40,0.1)] hover:border-ink/20
                             max-[480px]:flex-col"
                     >
@@ -99,10 +106,29 @@
                             <p class="text-[0.95rem] opacity-85">
                                 {item.description}
                             </p>
+                            <span
+                                class="inline-flex items-center gap-1.5 mt-4 font-gill text-xs uppercase"
+                            >
+                                Saber mais
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    class="transition-transform duration-300 group-hover:translate-x-1"
+                                >
+                                    <path d="M5 12h14M12 5l7 7-7 7" />
+                                </svg>
+                            </span>
                         </div>
-                    </article>
+                    </a>
                 {/each}
             </div>
-        </div>
-    </section>
-{/if}
+        {/if}
+    </div>
+</section>

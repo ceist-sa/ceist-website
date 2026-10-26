@@ -7,7 +7,7 @@
   const navItems = [
     { label: "Início", href: "/#hero" },
     { label: "Concertos", href: "/#news" },
-    { label: "Galeria", href: "/galeria" },
+    { label: "Galeria", href: "/#gallery" },
     { label: "Músicos", href: "/#members" },
     { label: "Inscrição", href: "/#join" },
     { label: "Contacto", href: "/#contact" },
@@ -30,8 +30,18 @@
       }
     };
 
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && mobileMenuOpen) {
+        closeMenu();
+      }
+    };
+
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    window.addEventListener("keydown", handleKeydown);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("keydown", handleKeydown);
+    };
   });
 </script>
 
@@ -40,7 +50,7 @@
 >
   <div class="flex items-center justify-between h-full max-w-5xl mx-auto px-8">
     <a href="/" class="flex items-center" onclick={closeMenu}>
-      <img src="/icon.svg" alt="CEIST" class="h-9 w-auto" />
+      <img src="/icon.svg" alt="CEIST — Início" class="h-9 w-auto" />
     </a>
 
     <nav class="hidden md:flex gap-8">
@@ -58,7 +68,9 @@
 
     <button
       class="md:hidden p-2 -mr-2"
-      aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+      aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
+      aria-expanded={mobileMenuOpen}
+      aria-controls="mobile-menu"
       onclick={toggleMenu}
     >
       {#if mobileMenuOpen}
@@ -71,6 +83,8 @@
 </header>
 
 <div
+  id="mobile-menu"
+  inert={!mobileMenuOpen}
   class="md:hidden fixed inset-0 top-header bg-paper z-60 transition-all duration-300 ease-in-out
          {mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}"
 >

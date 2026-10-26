@@ -28,11 +28,11 @@
             } else {
                 status = "error";
                 errorMessage =
-                    result.error || "Ocorreu um erro. Tente novamente.";
+                    result.error || "Ocorreu um erro. Tenta novamente.";
             }
         } catch (e) {
             status = "error";
-            errorMessage = "Erro de ligação. Verifique a sua internet.";
+            errorMessage = "Erro de ligação. Verifica a tua internet.";
         }
     }
 
@@ -53,7 +53,7 @@
     }
 </script>
 
-<section id="news" class="py-24 max-md:py-16 bg-ink text-paper relative overflow-hidden">
+<section id="newsletter" class="py-24 max-md:py-16 bg-ink text-paper relative overflow-hidden">
     <div
         class="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-[radial-gradient(circle_at_center,rgba(247,247,245,0.05)_0%,transparent_50%)] pointer-events-none"
     ></div>
@@ -166,7 +166,7 @@
                 </div>
                 <p class="text-lg">Subscrição efetuada com sucesso!</p>
                 <p class="text-sm opacity-60">
-                    Verifica o teu email para confirmar.
+                    Vais passar a receber as nossas novidades.
                 </p>
             </div>
         {:else}
@@ -179,12 +179,14 @@
                     type="email"
                     bind:value={email}
                     placeholder="o-teu@email.com"
+                    aria-label="Email"
+                    autocomplete="email"
                     required
                     class="w-full px-4 py-3 border-2 border-ink/10 focus:border-ink outline-none transition-colors bg-transparent"
                 />
 
                 {#if status === "error"}
-                    <p class="text-red-500 text-sm">{errorMessage}</p>
+                    <p class="text-red-500 text-sm" role="alert">{errorMessage}</p>
                 {/if}
 
                 <button

@@ -51,7 +51,7 @@ bun run build
 - `data/`: JSON files acting as the project's "database" for:
   - `concerts.json`: Upcoming and past performances.
   - `members.json`: Current members and their roles.
-  - `gallery.json`: Photos and albums.
+  - `settings.json`: Application form URL and the Immich album shown in the gallery.
 - `static/`: Static assets like images, logos, and fonts.
 
 ## 🐳 Deployment

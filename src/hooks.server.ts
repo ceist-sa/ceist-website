@@ -21,11 +21,17 @@ export const handle: Handle = async ({ event, resolve }) => {
         }
 
         // Decode Basic auth: "Basic base64(username:password)"
-        const base64Credentials = authHeader.slice(6);
-        const credentials = atob(base64Credentials);
-        const [, password] = credentials.split(':');
+        let password: string | undefined;
+        try {
+            const credentials = atob(authHeader.slice(6));
+            const separator = credentials.indexOf(':');
+            // The password may itself contain colons, so only split on the first one
+            password = separator === -1 ? undefined : credentials.slice(separator + 1);
+        } catch {
+            password = undefined;
+        }
 
-        if (password !== env.ADMIN_PASSWORD) {
+        if (!env.ADMIN_PASSWORD || password !== env.ADMIN_PASSWORD) {
             return new Response('Invalid credentials', {
                 status: 401,
                 headers: {
