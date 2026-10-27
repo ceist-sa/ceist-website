@@ -45,6 +45,7 @@ bun run build
 - `src/routes/`: Contains the page routes and API endpoints.
   - `(main)/`: The primary landing page and public routes.
   - `admin/`: Administrative interface for content management.
+  - `assinatura/`: Email signature generator for team members (behind the admin password; its logo is public in `static/email/`).
   - `api/`: Backend endpoints (newsletter, etc.).
 - `src/lib/`: Reusable components, utilities, and types.
   - `components/`: UI components (Hero, Gallery, Members, etc.).

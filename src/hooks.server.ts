@@ -4,8 +4,8 @@ import { env } from '$env/dynamic/private';
 export const handle: Handle = async ({ event, resolve }) => {
     const url = event.url.pathname;
 
-    // Protect admin routes and write API endpoints
-    const isProtectedRoute = url.startsWith('/admin') ||
+    // Protect admin routes, the team's email signature page and write API endpoints
+    const isProtectedRoute = url.startsWith('/admin') || url.startsWith('/assinatura') ||
         (url.startsWith('/api/') && event.request.method !== 'GET' && url !== '/api/subscribe');
 
     if (isProtectedRoute) {
