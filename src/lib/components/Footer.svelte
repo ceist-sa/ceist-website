@@ -38,9 +38,9 @@
                             <polyline points="22,6 12,13 2,6" />
                         </svg>
                         <a
-                            href="mailto:ceist.sa@aeist.pt"
+                            href="mailto:contacto@ceist.pt"
                             class="hover:opacity-70 transition-opacity"
-                            >ceist.sa@aeist.pt</a
+                            >contacto@ceist.pt</a
                         >
                     </li>
                     <li class="flex items-start gap-4">
