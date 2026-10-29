@@ -12,7 +12,9 @@
     import type { Section, Member } from "$lib/data/members";
     import type { GalleryPhoto } from "$lib/data/gallery";
 
-    let activeTab = $state<"concerts" | "members" | "gallery">("concerts");
+    let activeTab = $state<"concerts" | "members" | "gallery" | "press">(
+        "concerts",
+    );
 
     // Concerts state
     let concerts = $state<NewsItem[]>([]);
@@ -41,6 +43,31 @@
     let galleryPreview = $state<GalleryPhoto[]>([]);
     let galleryPreviewLoading = $state(false);
 
+    // Press kit state (files served at /imprensa, see src/lib/server/press.ts)
+    type PressKind = "zip" | "pdf";
+    type PressFile = { name: string; url: string; size: number; updatedAt: string };
+    const pressSlots: { kind: PressKind; label: string; accept: string; hint: string }[] = [
+        {
+            kind: "zip",
+            label: "Full kit (.zip)",
+            accept: ".zip,application/zip",
+            hint: "Guide, logos, texts and photos.",
+        },
+        {
+            kind: "pdf",
+            label: "Guide only (.pdf)",
+            accept: ".pdf,application/pdf",
+            hint: "The same PDF that is inside the zip.",
+        },
+    ];
+    let pressFiles = $state<Record<PressKind, PressFile | null>>({
+        zip: null,
+        pdf: null,
+    });
+    let pressUploading = $state<PressKind | null>(null);
+    let pressProgress = $state(0);
+    let pressError = $state("");
+
     // Settings state
     let joinFormUrl = $state("");
     let galleryAlbumUrl = $state("");
@@ -56,16 +83,19 @@
     async function loadData() {
         loading = true;
         try {
-            const [concertsRes, membersRes, settingsRes] = await Promise.all([
-                fetch("/api/concerts"),
-                fetch("/api/members"),
-                fetch("/api/settings"),
-            ]);
+            const [concertsRes, membersRes, settingsRes, pressRes] =
+                await Promise.all([
+                    fetch("/api/concerts"),
+                    fetch("/api/members"),
+                    fetch("/api/settings"),
+                    fetch("/api/press"),
+                ]);
             concerts = await concertsRes.json();
             sections = await membersRes.json();
             const settings = await settingsRes.json();
             joinFormUrl = settings.joinFormUrl ?? "";
             galleryAlbumUrl = settings.galleryAlbumUrl ?? "";
+            pressFiles = await pressRes.json();
             sortMembers();
             loadGalleryPreview();
         } finally {
@@ -104,6 +134,59 @@
         } finally {
             galleryPreviewLoading = false;
         }
+    }
+
+    // XMLHttpRequest rather than fetch, to show upload progress for the large zip
+    function uploadPressFile(kind: PressKind, event: Event) {
+        const input = event.currentTarget as HTMLInputElement;
+        const file = input.files?.[0];
+        input.value = "";
+        if (!file) return;
+
+        pressError = "";
+        pressUploading = kind;
+        pressProgress = 0;
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", `/api/press?kind=${kind}`);
+        xhr.setRequestHeader("Content-Type", "application/octet-stream");
+        xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) pressProgress = e.loaded / e.total;
+        };
+        xhr.onload = () => {
+            pressUploading = null;
+            if (xhr.status >= 200 && xhr.status < 300) {
+                pressFiles[kind] = JSON.parse(xhr.responseText);
+                showMessage("File uploaded");
+            } else {
+                let message = xhr.statusText;
+                try {
+                    message = JSON.parse(xhr.responseText).message ?? message;
+                } catch {}
+                pressError = `Upload failed: ${message || xhr.status}`;
+            }
+        };
+        xhr.onerror = () => {
+            pressUploading = null;
+            pressError = "Upload failed: network error";
+        };
+        xhr.send(file);
+    }
+
+    async function deletePressFile(kind: PressKind) {
+        if (!confirm("Remove this file from the website?")) return;
+        const response = await fetch(`/api/press?kind=${kind}`, {
+            method: "DELETE",
+        });
+        if (response.ok) {
+            pressFiles[kind] = null;
+            showMessage("File removed");
+        }
+    }
+
+    function formatSize(bytes: number): string {
+        return bytes >= 1e6
+            ? `${(bytes / 1e6).toFixed(1)} MB`
+            : `${Math.max(1, Math.round(bytes / 1e3))} KB`;
     }
 
     function showMessage(msg: string) {
@@ -403,6 +486,15 @@
                     : 'opacity-60 hover:opacity-100'}"
             >
                 Gallery
+            </button>
+            <button
+                onclick={() => (activeTab = "press")}
+                class="pb-3 px-2 font-gill transition-all {activeTab ===
+                'press'
+                    ? 'border-b-2 border-accent-gold text-accent-gold'
+                    : 'opacity-60 hover:opacity-100'}"
+            >
+                Press kit
             </button>
         </div>
 
@@ -991,6 +1083,99 @@
                         {/each}
                     </div>
                 </div>
+            </div>
+        {:else if activeTab === "press"}
+            <!-- Press Kit Tab -->
+            <div class="space-y-6">
+                <p class="text-sm opacity-70 max-w-3xl">
+                    Files offered for download at
+                    <a href="/imprensa" target="_blank" class="underline underline-offset-4"
+                        >ceist.pt/imprensa</a
+                    >. Build them with <code>build-kit.sh</code> in the design
+                    repository (<code>designs/2026-10-media-kit</code>) and upload
+                    the new versions here. Uploading replaces the current file;
+                    the download links stay the same.
+                </p>
+
+                {#if pressError}
+                    <p class="px-4 py-3 rounded-lg bg-accent-rose/20 border border-accent-rose/50 text-sm">
+                        {pressError}
+                    </p>
+                {/if}
+
+                {#each pressSlots as slot (slot.kind)}
+                    {@const file = pressFiles[slot.kind]}
+                    <div class="bg-paper/10 rounded-xl p-6 border border-paper/20">
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div>
+                                <h3 class="font-gill text-xl mb-1">{slot.label}</h3>
+                                <p class="text-sm opacity-60 mb-3">{slot.hint}</p>
+                                {#if file}
+                                    <p class="text-sm">
+                                        <a
+                                            href={file.url}
+                                            target="_blank"
+                                            class="underline underline-offset-4"
+                                            >{file.name}</a
+                                        >
+                                        <span class="opacity-60">
+                                            · {formatSize(file.size)} · uploaded
+                                            {new Date(file.updatedAt).toLocaleString("pt-PT", {
+                                                dateStyle: "medium",
+                                                timeStyle: "short",
+                                            })}
+                                        </span>
+                                    </p>
+                                {:else}
+                                    <p class="text-sm opacity-60">
+                                        Not uploaded yet: the download is hidden on
+                                        the website.
+                                    </p>
+                                {/if}
+                            </div>
+                            <div class="flex gap-3">
+                                <label
+                                    class="px-4 py-2 rounded-lg bg-accent-gold text-ink font-gill whitespace-nowrap transition-colors
+                                    {pressUploading
+                                        ? 'opacity-50 pointer-events-none'
+                                        : 'cursor-pointer hover:bg-accent-gold/90'}"
+                                >
+                                    {file ? "Replace" : "Upload"}
+                                    <input
+                                        type="file"
+                                        accept={slot.accept}
+                                        class="sr-only"
+                                        disabled={pressUploading !== null}
+                                        onchange={(e) => uploadPressFile(slot.kind, e)}
+                                    />
+                                </label>
+                                {#if file}
+                                    <button
+                                        onclick={() => deletePressFile(slot.kind)}
+                                        disabled={pressUploading !== null}
+                                        class="p-2 rounded-lg border border-accent-rose/50 text-accent-rose text-sm hover:bg-accent-rose/10 transition-colors"
+                                        aria-label="Remove"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                {/if}
+                            </div>
+                        </div>
+                        {#if pressUploading === slot.kind}
+                            <div class="mt-4 h-2 rounded-full bg-paper/10 overflow-hidden">
+                                <div
+                                    class="h-full bg-accent-gold transition-[width]"
+                                    style="width: {Math.round(pressProgress * 100)}%"
+                                ></div>
+                            </div>
+                            <p class="mt-2 text-sm opacity-60">
+                                {pressProgress < 1
+                                    ? `Uploading… ${Math.round(pressProgress * 100)}%`
+                                    : "Saving…"}
+                            </p>
+                        {/if}
+                    </div>
+                {/each}
             </div>
         {/if}
     </div>

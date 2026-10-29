@@ -30,4 +30,6 @@ COPY --from=builder /app/data ./data
 EXPOSE 3000
 
 ENV NODE_ENV=production
+# Large enough for the press kit uploaded from /admin (src/hooks.server.ts keeps other requests under 1 MB)
+ENV BODY_SIZE_LIMIT=200M
 CMD ["bun", "./build/index.js"]
