@@ -92,35 +92,15 @@
             </p>
         {/if}
 
-        <div class="grid md:grid-cols-2 gap-12 py-10 border-y border-ink/10 mb-12">
-            <div>
-                <h2 class="text-2xl mb-4">O que inclui</h2>
-                <ul class="space-y-2 opacity-85">
-                    <li>Guia de comunicação (PDF)</li>
-                    <li>Logótipos da CEIST em SVG e PNG, versões clara e escura</li>
-                    <li>Logótipos da AEIST e do Técnico</li>
-                    <li>Textos de apresentação, prontos a copiar</li>
-                    <li>Fotografias recentes da orquestra e dos Solistas da CEIST</li>
-                </ul>
-            </div>
-            <div>
-                <h2 class="text-2xl mb-4">Dois formatos de concerto</h2>
-                <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3">
-                    <dt class="font-gill text-sm uppercase opacity-60 pt-0.5">Orquestra</dt>
-                    <dd>
-                        A orquestra completa. Cada concerto tem nome próprio:
-                        Concerto de Natal, Concerto de Páscoa…
-                    </dd>
-                    <dt class="font-gill text-sm uppercase opacity-60 pt-0.5">Solistas</dt>
-                    <dd>
-                        <strong class="font-bold">Solistas da CEIST</strong>: pequenos
-                        grupos de câmara, como duos, trios e quartetos.
-                    </dd>
-                </dl>
-                <p class="mt-4 text-sm opacity-70">
-                    Nunca anunciem um concerto só como «Concerto».
-                </p>
-            </div>
+        <div class="py-10 border-y border-ink/10 mb-12">
+            <h2 class="text-2xl mb-4">O que inclui</h2>
+            <ul class="space-y-2 opacity-85">
+                <li>Guia de comunicação (PDF)</li>
+                <li>Logótipos da CEIST em SVG e PNG, versões clara e escura</li>
+                <li>Logótipos da AEIST e do Técnico</li>
+                <li>Textos de apresentação, prontos a copiar</li>
+                <li>Fotografias recentes da orquestra e dos Solistas da CEIST</li>
+            </ul>
         </div>
 
         <p class="max-w-[60ch]">
